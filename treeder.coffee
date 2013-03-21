@@ -1,6 +1,4 @@
-@tree = new Meteor.Collection("tree")
-@trees = new Meteor.Collection("trees")
-@levels = new Meteor.Collection("levels")
+@levels = new Meteor.Collection("levelss")
 @levelHeight = 80
 @nodeSize = 50
 
@@ -8,14 +6,14 @@ if Meteor.isClient
 	Meteor.startup ->
 		@levels.remove()
 		@container = $('#node-container')
-		this.parse()
+		@parse()
 
 	Template.main.events "click #connect": (event) ->
 		connectAll()
 
 	Template.main.events "click #parse": ->
 		@levels.remove()
-		this.parse()
+		@parse()
 
 
 	log2 = (val) ->
@@ -29,7 +27,6 @@ if Meteor.isClient
 
 
 	parse = ->
-		console.log "parsing"
 		# template data, if any, is available in 'this'
 		testData = [ {'data': 2}, {'data': 1}, {'data': 5}, {'data': null}, {'data': null}, {'data': 3}, {'data': 6}, {'data': null}, {'data': null}, {'data':null}, {'data': null}, {'data': null}, {'data': 4}, {'data': null}, {'data': null}]
 		treeJson = testData
