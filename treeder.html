@@ -15,7 +15,9 @@
 
 <template name="main">
 	<h1>Parser</h1>
-	<input type="button" value="parse" class="btn" />
+	<input type="button" value="parse" class="btn" id="parse" />
+	<input type="button" value="connectAll" class="btn" id="connect" />
+
 	<br>
 	<br>
 	<div class="tree-container container">
@@ -34,7 +36,7 @@
 		<div class="node-row" style="top: {{boundaryTop}}px; margin-left: {{marginLeft}}px">
 				{{#each nodes}}
 					{{#if data}}
-						<div class="node" style="left: {{xAxis}}px;">{{data}}</div>
+						<div class="node" data-identification="{{identification}}" data-parent="{{parent}}" style="left: {{xAxis}}px;">{{data}}</div>
 					{{else}}
 						<div class="node-empty" style="left: {{xAxis}}px;">{{data}}</div>
 					{{/if}}

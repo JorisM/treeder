@@ -1,16 +1,20 @@
 @tree = new Meteor.Collection("tree")
 @trees = new Meteor.Collection("trees")
 @levels = new Meteor.Collection("levels")
-@level = {}
 @levelHeight = 80
 @nodeSize = 50
-@nodeSpacing = 50
-@correction = 0
 
 if Meteor.isClient
 	Meteor.startup ->
-		@levels.remove({})
+		@levels.remove()
 		@container = $('#node-container')
+		this.parse()
+
+	Template.main.events "click #connect": (event) ->
+		connectAll()
+
+	Template.main.events "click #parse": ->
+		@levels.remove()
 		this.parse()
 
 
@@ -23,56 +27,91 @@ if Meteor.isClient
 	Template.main.levels = ->
 		@levels.find({})
 
-	Template.node.isNull = (data) ->
-		data == "null"
-
 
 	parse = ->
+		console.log "parsing"
 		# template data, if any, is available in 'this'
-		array = [ {'data': 2}, {'data': 1}, {'data': 5}, {'data': null}, {'data': null}, {'data': 3}, {'data': 6}, {'data': null}, {'data': null}, {'data':null}, {'data': null}, {'data': null}, {'data': 4}, {'data': null}, {'data': null}]
+		testData = [ {'data': 2}, {'data': 1}, {'data': 5}, {'data': null}, {'data': null}, {'data': 3}, {'data': 6}, {'data': null}, {'data': null}, {'data':null}, {'data': null}, {'data': null}, {'data': 4}, {'data': null}, {'data': null}]
+		treeJson = testData
 
-		height = log2(array.length + 1)
+		height = log2(treeJson.length + 1)
 
 		Session.set 'height', height
-		maxNodesLevel = 1
-		levelCounter = 1
-		currentPerLevel = 0
-		@level.nodes = []
-		@containerWidth = (2 * height) * @nodeSize
-		@container.width(@containerWidth)
+		numOfNodesAtLevel = 1
+		currentLevel = 1
+		currentNode = 0
+		containerWidth = (2 * height) * (@nodeSize) + @nodeSize
+		level = []
+		@container.width(containerWidth)
+		_.each treeJson, (item) ->
+			item.xAxis = (containerWidth / (numOfNodesAtLevel + 1)) * (currentNode + 1)
+			if level['nodes'] is undefined || level['nodes'].length == 0
+				level['nodes'] = []
+			level['nodes'][currentNode] = item
+			item.identification = "n"+currentNode + "l" + currentLevel
+			parentNode = Math.floor(currentNode / 2)
+			parentLevel = (currentLevel - 1)
+			item.parent = "n"+parentNode + "l" + parentLevel
+			currentNode++
+			#at last node of the current level, set up new level
+			if numOfNodesAtLevel is currentNode
+				#change level distance from top
+				level['boundaryTop'] = @levelHeight * currentLevel
+				level['level'] = currentLevel
+				#save level data
+				@levels.insert(level)
+				#clear
+				level = []
+				#change the number of items per level for the next level
+				numOfNodesAtLevel = numOfNodesAtLevel * 2
+				currentNode = 0
+				currentLevel++
 
-		_.each array, (item) ->
-			if maxNodesLevel >= currentPerLevel
-				if maxNodesLevel is 1
-					item.xAxis = @containerWidth / 2
-				else
-					item.xAxis = (currentPerLevel * nodeSize) + (currentPerLevel * @nodeSpacing)
-				@level.nodes.push(item)
-				currentPerLevel++
-				if maxNodesLevel is currentPerLevel
-					#whats the level number
-					@level.level = levelCounter
-					#bubble container width
-					if maxNodesLevel is 1
-						@level.marginLeft = @containerWidth / 2
-					else
-						@level.marginLeft = @containerWidth - ((maxNodesLevel * @nodeSize) / 2)
-					@level.boundaryTop = @levelHeight * levelCounter
-					#insert new level into level array
-					@levels.insert(@level)
-					#clear
-					@level = {}
-					@level.nodes = []
-					#change the number of items per level for the next level
-					maxNodesLevel = maxNodesLevel * 2
-					currentPerLevel = 0
-					@nodeSpacing = @nodeSpacing / 2
-					levelCounter++
-		console.log 'tree: ', @levels
+	connectAll = ->
+		_.each $(".node"), (item) ->
+			if $(item).data("parent") != 'n0l0'
+				orig = $('.node[data-identification="'+$(item).data('identification')+'"]')
+				parent = $('.node[data-identification="'+$(item).data('parent')+'"]')
+				if parent != undefined
+					connect(orig, parent, "blue", 1)
 
-	Template.main.events "click input": ->
-		@levels.remove({})
-		this.parse()
+
+	getOffset = (el) -> # return element top, left, width, height
+		myOff = el.offset()
+		top: myOff.top
+		left: myOff.left
+		width: 50
+		height: 50
+
+	connect = (div1, div2, color, thickness) -> # draw a line connecting elements
+		off1 = getOffset(div1)
+		off2 = getOffset(div2)
+
+		# bottom right
+		x1 = off1.left + off1.width / 2
+		y1 = off1.top
+
+		# top right
+		x2 = off2.left + off2.width / 2
+		y2 = off2.top + off2.height
+
+		# distance
+		length = Math.sqrt(((x2 - x1) * (x2 - x1)) + ((y2 - y1) * (y2 - y1)))
+
+		# center
+		cx = ((x1 + x2) / 2) - (length / 2)
+		cy = ((y1 + y2) / 2) - (thickness / 2)
+
+		# angle
+		angle = Math.atan2((y1 - y2), (x1 - x2)) * (180 / Math.PI)
+
+		# make hr
+		htmlLine = "<div style='padding:0px; margin:0px; height:" + thickness + "px; background-color:" + color + "; line-height:1px; position:absolute; left:" + cx + "px; top:" + cy + "px; width:" + length + "px; -moz-transform:rotate(" + angle + "deg); -webkit-transform:rotate(" + angle + "deg); -o-transform:rotate(" + angle + "deg); -ms-transform:rotate(" + angle + "deg); transform:rotate(" + angle + "deg);' />"
+
+
+		document.body.innerHTML += htmlLine
+
+
 
 
 
