@@ -3,8 +3,8 @@
 @levels = new Meteor.Collection("levels")
 @level = {}
 @levelHeight = 80
-@nodeHeight = 50
-@nodeSpacing = 0
+@nodeSize = 50
+@nodeSpacing = 50
 @correction = 0
 
 if Meteor.isClient
@@ -38,44 +38,37 @@ if Meteor.isClient
 		levelCounter = 1
 		currentPerLevel = 0
 		@level.nodes = []
-		@container.width(0)
-		#if the container is too small, make it bigger
-		if (@container.width() - ((2 * height)) * (@nodeHeight + @nodeSpacing)) < 0
-			@container.width((2 * height) * (@nodeHeight + @nodeSpacing))
-			console.log 'needed to resize'
-			console.log((2 * height) * (@nodeHeight))
+		@containerWidth = (2 * height) * @nodeSize
+		@container.width(@containerWidth)
 
 		_.each array, (item) ->
 			if maxNodesLevel >= currentPerLevel
 				if maxNodesLevel is 1
-					item.xAxis = @container.width() / 2 / 2
+					item.xAxis = @containerWidth / 2
 				else
-					spacePerNode = @container.width() / maxNodesLevel
-					item.xAxis = currentPerLevel * spacePerNode
+					item.xAxis = (currentPerLevel * nodeSize) + (currentPerLevel * @nodeSpacing)
 				@level.nodes.push(item)
 				currentPerLevel++
 				if maxNodesLevel is currentPerLevel
 					#whats the level number
 					@level.level = levelCounter
 					#bubble container width
-					@level.boundaryLeft = ((@container.width() - ((2 * currentPerLevel) - 1) * (@nodeHeight + @nodeSpacing)))
-					console.log @level.boundaryLeft
-					#if it's an odd level, shift it a little bit to the left
-					@level.marginLeft = ((levelCounter * 2) * @nodeHeight) + @correction
+					if maxNodesLevel is 1
+						@level.marginLeft = @containerWidth / 2
+					else
+						@level.marginLeft = @containerWidth - ((maxNodesLevel * @nodeSize) / 2)
 					@level.boundaryTop = @levelHeight * levelCounter
 					#insert new level into level array
 					@levels.insert(@level)
-					#removing all items per level so the next level can be filled up
+					#clear
 					@level = {}
 					@level.nodes = []
 					#change the number of items per level for the next level
 					maxNodesLevel = maxNodesLevel * 2
 					currentPerLevel = 0
+					@nodeSpacing = @nodeSpacing / 2
 					levelCounter++
-
-					@correction = @correction + @nodeHeight
-
-		console.log @levels
+		console.log 'tree: ', @levels
 
 	Template.main.events "click input": ->
 		@levels.remove({})

@@ -31,14 +31,13 @@
 
 
 <template name="node">
-<!-- 	<div class="level">{{level}}</div>
- -->	<div class="node-row" style="left:{{boundaryLeft}}px; top: {{boundaryTop}}px; margin-left: {{marginLeft}}px">
-			{{#each nodes}}
-				{{#if data}}
-					<div class="node" style="left: {{xAxis}}px;">{{data}}</div>
-				{{else}}
-					<div class="node-empty" style="left: {{xAxis}}px;">{{data}}</div>
-				{{/if}}
-			{{/each}}
-	</div>
+		<div class="node-row" style="top: {{boundaryTop}}px; margin-left: {{marginLeft}}px">
+				{{#each nodes}}
+					{{#if data}}
+						<div class="node" style="left: {{xAxis}}px;">{{data}}</div>
+					{{else}}
+						<div class="node-empty" style="left: {{xAxis}}px;">{{data}}</div>
+					{{/if}}
+				{{/each}}
+		</div>
 </template>
